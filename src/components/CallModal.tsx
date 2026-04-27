@@ -62,15 +62,17 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
 
       try {
         // TEST MODE: If channel name is 'test', use your temporary token
-        let channelName = `connact_v_${ids[0]}_${ids[1]}`;
+        let finalChannel = `connact_v_${ids[0]}_${ids[1]}`;
         let token = null;
+        let uid: string | number = currentUserId;
 
         if (otherUser.id === 'test' || otherUser.name === 'test') {
-          channelName = "test";
+          finalChannel = "test";
           token = "007eJxTYFjWdUPpmskjjztGu89WVXgdnKfJesXnecT9M5wnK490v2RVYDBMMjdNNTJPTUtMNjZJMje2NE20sDSwNDMxMzM3TUm1WF37PrMhkJFBJNKFgREKQXwWhpLU4hIGBgDP/SCo";
+          uid = 0; // Use 0 for test tokens as they are often generated for UID 0
         }
 
-        await client.current.join(AGORA_APP_ID, channelName, token, currentUserId);
+        await client.current.join(AGORA_APP_ID, finalChannel, token, uid);
         
         localAudioTrack.current = await AgoraRTC.createMicrophoneAudioTrack();
         localVideoTrack.current = await AgoraRTC.createCameraVideoTrack();
