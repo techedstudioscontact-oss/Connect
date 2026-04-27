@@ -277,9 +277,9 @@ export default function App() {
       
       setActiveCall({ user, isVideo });
       window.history.pushState({ modal: 'call' }, '');
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error initiating call:", e);
-      alert("Call failed to start. Please check your internet.");
+      alert("Call Error: " + (e.message || "Unknown error"));
     }
   };
 
