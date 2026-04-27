@@ -3,7 +3,7 @@ import AgoraRTC, { IAgoraRTCClient, ICameraVideoTrack, IMicrophoneAudioTrack } f
 import { PhoneOff, Video, VideoOff, Mic, MicOff, Shield } from 'lucide-react';
 import { auth } from '../lib/firebase';
 
-const AGORA_APP_ID = "1b75e27efac34b7395a8909646675de8";
+const AGORA_APP_ID = "3ab2399d5baa4fb09f27cc74cc1bab76";
 
 interface CallModalProps {
   otherUser: {
