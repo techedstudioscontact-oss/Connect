@@ -57,19 +57,18 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
             startScreenSharing: false,
             enableEmailInStats: false,
             prejoinPageEnabled: false,
+            readOnlyName: true,
             toolbarButtons: [
                'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-               'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-               'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-               'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-               'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
-               'security'
+               'fodeviceselection', 'hangup', 'profile', 'chat', 'settings', 'raisehand',
+               'videoquality', 'filmstrip', 'tileview', 'videobackgroundblur', 'security'
             ],
           }}
           interfaceConfigOverwrite={{
             DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
             SHOW_JITSI_WATERMARK: false,
             SHOW_WATERMARK_FOR_GUESTS: false,
+            MOBILE_APP_PROMO: false,
           }}
           userInfo={{
             displayName: auth.currentUser?.displayName || 'User',
@@ -84,6 +83,7 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
           getIFrameRef={(iframeRef) => {
             iframeRef.style.height = '100%';
             iframeRef.style.width = '100%';
+            iframeRef.allow = "camera; microphone; display-capture; autoplay";
           }}
         />
       </div>

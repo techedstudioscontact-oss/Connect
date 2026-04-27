@@ -253,9 +253,22 @@ export default function App() {
   const startCall = async (user: any, isVideo: boolean = false) => {
     if (!currentUser) return;
     
-    // Signal the other user via Firestore
     try {
-      await setDoc(doc(db, 'calls', user.id || user.userId), {
+      // First, ensure native permissions are granted
+      const perm = await Camera.requestPermissions();
+      if (perm.camera !== 'granted') {
+        alert("Camera permission is required for video calls.");
+        return;
+      }
+
+      const targetId = user.id || user.userId;
+      if (!targetId) {
+        alert("Could not find user ID to call.");
+        return;
+      }
+
+      // Signal the other user via Firestore
+      await setDoc(doc(db, 'calls', targetId), {
         from: currentUser.uid,
         status: 'incoming',
         isVideo,
@@ -266,6 +279,7 @@ export default function App() {
       window.history.pushState({ modal: 'call' }, '');
     } catch (e) {
       console.error("Error initiating call:", e);
+      alert("Call failed to start. Please check your internet.");
     }
   };
 
