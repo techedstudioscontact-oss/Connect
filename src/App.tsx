@@ -212,20 +212,7 @@ export default function App() {
             {activeTab === 'games' && <GamesTab />}
             {activeTab === 'search' && <SearchTab onSelectDm={openDm} />}
             {activeTab === 'profile' && <ProfileTab onEditProfile={() => openSettings('account')} onOpenSettings={() => openSettings()} />}
-            {activeTab === 'video' && (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-6 animate-slide-up">
-                <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                  <Video className="w-12 h-12 text-rose-500" />
-                </div>
-                <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Video Call</h2>
-                <p className="text-slate-500 max-w-xs font-medium leading-relaxed">
-                  Connect randomly with anyone around the world. Our Omegle-style video chat is coming soon!
-                </p>
-                <div className="mt-8 px-6 py-2 bg-slate-900 text-white rounded-full text-sm font-bold tracking-wide uppercase opacity-50 cursor-not-allowed">
-                  Under Development
-                </div>
-              </div>
-            )}
+
           </div>
 
         </div>
@@ -258,12 +245,7 @@ export default function App() {
             active={activeTab === 'search'}
             onClick={() => setActiveTab('search')}
           />
-          <NavItem 
-            icon={<Video className={`w-6 h-6 ${activeTab === 'video' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.2} />} 
-            label="CONNECT" 
-            active={activeTab === 'video'}
-            onClick={() => setActiveTab('video')}
-          />
+
         </div>
         
         
