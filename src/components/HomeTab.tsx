@@ -431,9 +431,6 @@ export function HomeTab() {
 
   return (
     <div className="animate-slide-up pb-10">
-      <h2 className="text-[26px] font-extrabold text-slate-900 tracking-tight mb-6 md:max-w-2xl md:mx-auto">
-        {getGreeting()}, {currentUserName.split(' ')[0]}!
-      </h2>
 
       {/* Create Post UI */}
       <div className="bg-white/80 backdrop-blur-xl rounded-[32px] p-4 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-white/60 mb-6 md:max-w-2xl md:mx-auto">
