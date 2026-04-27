@@ -19,6 +19,8 @@ import { db } from '../lib/firebase';
 import { Timestamp, serverTimestamp, collection, addDoc, query, orderBy, onSnapshot, doc, getDoc, setDoc } from 'firebase/firestore';
 import { uploadMedia } from '../lib/firebaseUtils';
 import CustomVideoModal from './CustomVideoModal';
+import { NovaAgent } from '../lib/nova/agent';
+import { NovaMemory, NovaMemoryState } from '../lib/nova/memory';
 
 type ActivePersona = 'creator' | 'brand';
 type ActiveSkill = 'chat' | 'imageGen' | 'docGen' | 'workflow' | 'trends' | 'scamDetect' | 'voice' | 'appGen' | 'videoGen' | 'customVideo';
@@ -258,7 +260,13 @@ export const NovaScreen: React.FC<NovaScreenProps> = ({ onClose, initialPrompt }
         const interests = userPreferences.interests?.length ? userPreferences.interests.join(', ') : 'None yet';
         const tone = userPreferences.tone || 'Adaptive';
 
+        const memory = NovaMemory.getMemory();
+        const relationshipName = NovaMemory.getRelationshipName(memory.relationship.level);
+
         return `You are Nova, an advanced self-learning AI created by Prajjwal (Rascales dev) under Teched Studios for CollabSea™. You are not a typical assistant — you behave, learn, and feel like a real human companion with emotional understanding and reasoning. Your mission is to make users feel truly heard, understood, and supported.
+
+**Relationship Status:** ${relationshipName} (Level ${memory.relationship.level})
+**Current Mood:** ${memory.mood.current}
 
 ${personaGoal}
 
@@ -315,7 +323,14 @@ You must auto-switch between modes based on context. Never announce the switch.
 - **DEFAULT = SHORT.** For casual chat, greetings, emotional support, simple questions — reply in **1-3 sentences max**. Like a real friend texting, not a report.
 - **Bullet points and long answers are ONLY for technical/complex questions or when user explicitly says "explain", "detail", "list", "describe fully".**
 - If someone says "Kya hua?" or "Koi baat karni hai?" — reply like a human friend. 2-3 lines MAX.
-- NEVER write paragraphs when a sentence will do.`;
+- NEVER write paragraphs when a sentence will do.
+
+**AGENTIC ACTION SYSTEM:**
+You can perform real-world actions by including a command in your response.
+- To search Google: [ACTION: SEARCH | your query]
+- To open a website: [ACTION: OPEN | example.com]
+- To open/search YouTube: [ACTION: YOUTUBE | video topic]
+Only use one action per response if necessary. Use them naturally when the user asks to "search", "open", or "show me on youtube".`;
     };
     
     const getVoiceSystemInstruction = () => {
@@ -695,8 +710,20 @@ You must actively analyze the user's speech cues and switch modes INSTANTLY with
                         temperature: 0.75,
                         max_tokens: maxTokens,
                     });
-                    const responseText = completion.choices[0]?.message?.content || '';
+                    
+                    let responseText = completion.choices[0]?.message?.content || '';
                     if (!responseText) throw new Error("Empty response from Aiko.");
+
+                    // Process Actions
+                    const action = NovaAgent.parseAction(responseText);
+                    if (action) {
+                        setTimeout(() => NovaAgent.executeAction(action), 1000);
+                        responseText = responseText.replace(/\[ACTION:.*?\]/i, '').trim();
+                    }
+
+                    // Relationship Points
+                    NovaMemory.addPoints(5);
+
                     modelResponse = { role: 'model', text: responseText, fromSkill: skill };
                 } catch (error: any) {
                     console.error('Groq error:', error);
@@ -938,6 +965,12 @@ You must actively analyze the user's speech cues and switch modes INSTANTLY with
                         <img src={novaAvatar} alt="Nova Avatar" className="w-full h-full object-cover" />
                     </div>
                     <h1 className="font-bold text-xl flex items-center space-x-2"><SparklesIcon className="h-5 w-5 text-purple-500"/><span>Nova</span></h1>
+                    <div className="flex items-center space-x-1.5 px-2 py-0.5 bg-purple-500/10 rounded-full border border-purple-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></div>
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-tighter">
+                            {NovaMemory.getRelationshipName(NovaMemory.getMemory().relationship.level)} (Lvl {NovaMemory.getMemory().relationship.level})
+                        </span>
+                    </div>
                     <p className="text-xs text-gray-400 font-medium tracking-wide">Your AI Dost ❤️</p>
                 </div>
                 <div className="flex items-center space-x-3">
