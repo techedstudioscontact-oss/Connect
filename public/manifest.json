@@ -1,0 +1,17 @@
+{
+  "name": "Connect",
+  "short_name": "Connect",
+  "description": "Connect with friends and AI companions",
+  "start_url": "/Connect/",
+  "display": "standalone",
+  "background_color": "#0c1222",
+  "theme_color": "#0c1222",
+  "icons": [
+    {
+      "src": "nova-avatar.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

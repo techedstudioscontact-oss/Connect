@@ -21,6 +21,18 @@ export default function App() {
   const [theme, setTheme] = useState<'light'|'dark'|'system'>(() => {
     return (localStorage.getItem('connect-theme') as 'light'|'dark'|'system') || 'system';
   });
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('connect-theme', theme);
@@ -132,6 +144,27 @@ export default function App() {
 
   return (
     <div className="h-[100dvh] w-full bg-neutral-100 dark:bg-slate-950 font-sans flex justify-center overflow-hidden text-slate-900 dark:text-slate-100">
+      {!isOnline && (
+        <div className="fixed inset-0 z-[1000] bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+          <div className="w-20 h-20 bg-rose-500/20 rounded-full flex items-center justify-center mb-6">
+            <div className="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center animate-pulse">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-3.674m0 0L3 3m3.343 3.343L3 3" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-2xl font-black mb-2 tracking-tight">You're Offline</h2>
+          <p className="text-slate-400 max-w-xs font-medium leading-relaxed mb-8">
+            Connect requires an active internet connection to work. Please check your network and try again.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-8 py-3 bg-white text-slate-900 rounded-full font-bold shadow-xl hover:scale-105 transition-transform"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
       {/* Main App Container */}
       <div className="relative w-full h-full md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden bg-[#faf9f6] dark:bg-[#0c1222] shadow-2xl sm:border-x border-black/5 flex flex-col">
         
