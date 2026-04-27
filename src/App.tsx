@@ -8,6 +8,8 @@ import {
 } from './components';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { Camera } from '@capacitor/camera';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -22,6 +24,27 @@ export default function App() {
     return (localStorage.getItem('connect-theme') as 'light'|'dark'|'system') || 'system';
   });
   const [isOnline, setIsOnline] = useState(true);
+
+  // Request native permissions on mount
+  useEffect(() => {
+    const requestHardwarePermissions = async () => {
+      try {
+        await Camera.requestPermissions();
+      } catch (e) { console.log('Camera permission failed', e); }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      } catch (e) { console.log('Microphone permission failed', e); }
+
+      try {
+        await PushNotifications.requestPermissions();
+      } catch (e) { console.log('Notification permission failed', e); }
+    };
+    
+    // Slight delay to ensure app is fully rendered before prompting
+    setTimeout(requestHardwarePermissions, 1000);
+  }, []);
 
   useEffect(() => {
     // Safely check online status after mount to prevent SSR/Webview false negatives
@@ -207,7 +230,7 @@ export default function App() {
               <h1 className="text-[28px] font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-[1px]">
                 C<span className="relative inline-flex justify-center items-center">
                   o<span className="absolute w-[120%] h-[2.5px] bg-slate-900 dark:bg-white rotate-[-45deg] rounded-full"></span>
-                </span>nnect
+                </span>nnact
               </h1>
               <div className="flex gap-3">
                 <button 

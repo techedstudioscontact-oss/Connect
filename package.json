@@ -12,6 +12,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor/camera": "^8.1.0",
+    "@capacitor/push-notifications": "^8.0.3",
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/katex": "^0.16.8",

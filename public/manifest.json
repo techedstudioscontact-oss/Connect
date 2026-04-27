@@ -1,6 +1,6 @@
 {
-  "name": "Connect",
-  "short_name": "Connect",
+  "name": "Connact",
+  "short_name": "Connact",
   "description": "Connect with friends and AI companions",
   "start_url": "/Connect/",
   "display": "standalone",
