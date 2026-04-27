@@ -122,11 +122,16 @@ export default function App() {
         });
       }
     };
+    const handleTestCall = () => {
+      startCall({ id: 'test', name: 'Agora Test Channel', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80' }, true);
+    };
     window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener('startTestCall', handleTestCall);
 
     return () => {
       unsubscribe();
       window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener('startTestCall', handleTestCall);
     };
   }, []);
 

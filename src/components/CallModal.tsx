@@ -61,10 +61,14 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
       const channelName = `connact_v_${ids[0]}_${ids[1]}`;
 
       try {
-        // NOTE: In a real production app, you fetch this token from your Firebase Cloud Function
-        // For now, if you have enabled "App Certificate", you MUST provide a token.
-        // If you are testing, you can generate a Temporary Token in Agora Console and paste it here:
-        const token = null; // Replace with a dynamic token from a backend server later
+        // TEST MODE: If channel name is 'test', use your temporary token
+        let channelName = `connact_v_${ids[0]}_${ids[1]}`;
+        let token = null;
+
+        if (otherUser.id === 'test' || otherUser.name === 'test') {
+          channelName = "test";
+          token = "007eJxTYFjWdUPpmskjjztGu89WVXgdnKfJesXnecT9M5wnK490v2RVYDBMMjdNNTJPTUtMNjZJMje2NE20sDSwNDMxMzM3TUm1WF37PrMhkJFBJNKFgREKQXwWhpLU4hIGBgDP/SCo";
+        }
 
         await client.current.join(AGORA_APP_ID, channelName, token, currentUserId);
         

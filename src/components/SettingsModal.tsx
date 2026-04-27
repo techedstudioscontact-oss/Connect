@@ -179,6 +179,15 @@ export function SettingsModal({ onClose, onLogout, initialView = 'main', theme =
                   </button>
                </div>
             </div>
+            <button 
+              onClick={() => {
+                onClose();
+                window.dispatchEvent(new CustomEvent('startTestCall'));
+              }}
+              className="w-full bg-emerald-50 text-emerald-600 font-bold py-3.5 rounded-2xl shadow-sm hover:bg-emerald-100 transition-colors border border-emerald-200 mb-2"
+            >
+              Test Agora Connection
+            </button>
             <button className="w-full bg-rose-50 text-rose-600 font-bold py-3.5 rounded-2xl shadow-sm hover:bg-rose-100 transition-colors border border-rose-200">
               Delete Account
             </button>
