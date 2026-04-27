@@ -256,7 +256,9 @@ export default function App() {
     openDm(user);
   };
 
-  const startCall = async (user: any, isVideo: boolean = false) => {
+  const startCall = async (user: any, isVideo: boolean) => {
+    alert("Voice & Video Calling is coming soon in the next update! 🚀");
+    return;
     if (!currentUser) return;
     
     try {
