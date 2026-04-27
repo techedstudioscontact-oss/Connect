@@ -10,8 +10,9 @@ import { Camera } from '@capacitor/camera';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { App as CapApp } from '@capacitor/app';
 import { CallModal } from './components';
-import { auth } from './lib/firebase';
+import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import Peer from 'peerjs';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -28,6 +29,8 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(true);
   const [viewingUser, setViewingUser] = useState<any | null>(null);
   const [activeCall, setActiveCall] = useState<any | null>(null);
+  const [peer, setPeer] = useState<Peer | null>(null);
+  const [incomingCall, setIncomingCall] = useState<any | null>(null);
 
   // Request native permissions on mount
   useEffect(() => {
@@ -127,6 +130,30 @@ export default function App() {
       window.removeEventListener('profileUpdated', handleProfileUpdate);
     };
   }, []);
+
+  // Initialize PeerJS for incoming calls
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+
+    const newPeer = new Peer(currentUser.uid);
+    setPeer(newPeer);
+
+    newPeer.on('call', (call) => {
+      // Find user info for the caller (this would ideally come from a signal or Firebase)
+      // For now, we'll show a generic incoming call and fetch name later
+      setIncomingCall(call);
+      setActiveCall({ 
+        user: { id: call.peer, name: 'Incoming Call...', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80' }, 
+        isVideo: true, 
+        isIncoming: true 
+      });
+      window.history.pushState({ modal: 'call' }, '');
+    });
+
+    return () => {
+      newPeer.destroy();
+    };
+  }, [currentUser?.uid]);
 
   // Handle hardware back button for app-level modals (DMs, Settings, Notifications)
   useEffect(() => {
@@ -230,6 +257,7 @@ export default function App() {
       window.history.back();
     } else {
       setActiveCall(null);
+      setIncomingCall(null);
     }
   };
 
@@ -382,6 +410,9 @@ export default function App() {
         {activeCall && (
           <CallModal 
             otherUser={activeCall.user} 
+            isIncoming={activeCall.isIncoming}
+            incomingCall={incomingCall}
+            peer={peer}
             onClose={closeCall} 
           />
         )}

@@ -10,65 +10,75 @@ interface CallModalProps {
     avatar: string;
   };
   isIncoming?: boolean;
-  incomingStream?: any;
+  incomingCall?: any;
+  peer: any;
   onClose: () => void;
 }
 
-export function CallModal({ otherUser, isIncoming, incomingStream, onClose }: CallModalProps) {
+export function CallModal({ otherUser, isIncoming, incomingCall, peer, onClose }: CallModalProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isAnswered, setIsAnswered] = useState(false);
   const [callStatus, setCallStatus] = useState<string>(isIncoming ? 'Incoming Call...' : 'Calling...');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [peer, setPeer] = useState<Peer | null>(null);
   const [activeCall, setActiveCall] = useState<any>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Initialize Peer
-    const currentUserId = auth.currentUser?.uid;
-    if (!currentUserId) return;
+    if (!peer) return;
 
-    const newPeer = new Peer(currentUserId);
-    setPeer(newPeer);
-
-    // Get local media
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((myStream) => {
-      setStream(myStream);
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = myStream;
-      }
-
-      if (isIncoming && incomingStream) {
-        setCallStatus('Connected');
-        setRemoteStream(incomingStream);
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = incomingStream;
+    const startOrAnswer = async () => {
+      try {
+        const myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setStream(myStream);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = myStream;
         }
-      } else if (!isIncoming) {
-        // Start the call
-        const call = newPeer.call(otherUser.id, myStream);
-        setActiveCall(call);
-        call.on('stream', (remoteMediaStream) => {
-          setCallStatus('Connected');
-          setRemoteStream(remoteMediaStream);
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteMediaStream;
-          }
-        });
+
+        if (isIncoming && incomingCall) {
+          // If we are answering, we wait for the user to click Answer
+          setActiveCall(incomingCall);
+        } else if (!isIncoming) {
+          // Start the outgoing call
+          const call = peer.call(otherUser.id, myStream);
+          setActiveCall(call);
+          call.on('stream', (remoteMediaStream: MediaStream) => {
+            setCallStatus('Connected');
+            setRemoteStream(remoteMediaStream);
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = remoteMediaStream;
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Failed to get local stream", err);
+        setCallStatus('Camera/Mic Access Denied');
       }
-    }).catch(err => {
-      console.error("Failed to get local stream", err);
-      setCallStatus('Camera/Mic Access Denied');
-    });
+    };
+
+    startOrAnswer();
 
     return () => {
-      newPeer.destroy();
       stream?.getTracks().forEach(track => track.stop());
     };
-  }, [otherUser.id, isIncoming]);
+  }, [otherUser.id, isIncoming, peer, incomingCall]);
+
+  const handleAnswer = () => {
+    if (activeCall && stream) {
+      activeCall.answer(stream);
+      setIsAnswered(true);
+      setCallStatus('Connected');
+      activeCall.on('stream', (remoteMediaStream: MediaStream) => {
+        setRemoteStream(remoteMediaStream);
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteMediaStream;
+        }
+      });
+    }
+  };
 
   const endCall = () => {
     activeCall?.close();
@@ -130,26 +140,45 @@ export function CallModal({ otherUser, isIncoming, incomingStream, onClose }: Ca
 
       {/* Controls */}
       <div className="absolute bottom-12 flex items-center gap-6 px-8 py-5 bg-black/30 backdrop-blur-2xl rounded-[40px] border border-white/10 shadow-2xl">
-        <button 
-          onClick={toggleMic}
-          className={`w-14 h-14 flex items-center justify-center rounded-full transition-all ${isMuted ? 'bg-rose-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-        >
-          {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-        </button>
+        {isIncoming && !isAnswered ? (
+          <>
+            <button 
+              onClick={handleAnswer}
+              className="w-16 h-16 flex items-center justify-center rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/30 transition-all active:scale-90 animate-bounce"
+            >
+              <Phone className="w-8 h-8" />
+            </button>
+            <button 
+              onClick={endCall}
+              className="w-16 h-16 flex items-center justify-center rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-600/30 transition-all active:scale-90"
+            >
+              <PhoneOff className="w-8 h-8" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button 
+              onClick={toggleMic}
+              className={`w-14 h-14 flex items-center justify-center rounded-full transition-all ${isMuted ? 'bg-rose-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+            >
+              {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+            </button>
 
-        <button 
-          onClick={endCall}
-          className="w-16 h-16 flex items-center justify-center rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-600/30 transition-all active:scale-90"
-        >
-          <PhoneOff className="w-8 h-8" />
-        </button>
+            <button 
+              onClick={endCall}
+              className="w-16 h-16 flex items-center justify-center rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-600/30 transition-all active:scale-90"
+            >
+              <PhoneOff className="w-8 h-8" />
+            </button>
 
-        <button 
-          onClick={toggleVideo}
-          className={`w-14 h-14 flex items-center justify-center rounded-full transition-all ${isVideoOff ? 'bg-rose-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-        >
-          {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-        </button>
+            <button 
+              onClick={toggleVideo}
+              className={`w-14 h-14 flex items-center justify-center rounded-full transition-all ${isVideoOff ? 'bg-rose-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+            >
+              {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Header Info */}
