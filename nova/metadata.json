@@ -1,0 +1,8 @@
+{
+  "name": "CollabSea",
+  "description": "CollabSea is a modern, real-time platform connecting Brands and Influencers for collaborations, campaigns, and authentic marketing. Built with Firebase and React.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": []
+}

@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 p-0 font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .animate-background-pan {
+    background-size: 200% 200%;
+    animation: background-pan 10s ease infinite;
+  }
+}
+
+@keyframes background-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes text-glow {
+  0%, 100% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #67e8f9, 0 0 20px #67e8f9; }
+  50% { text-shadow: 0 0 10px #fff, 0 0 15px #a5f3fc, 0 0 20px #a5f3fc, 0 0 25px #a5f3fc; }
+}
+
+@keyframes pulse-logo {
+  0%, 100% { transform: scale(1); opacity: 0.9; filter: drop-shadow(0 0 15px rgba(76, 201, 240, 0.6)); }
+  50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 25px rgba(76, 201, 240, 0.8)); }
+}
+
+@keyframes fade-in-down {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-shadow {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.animate-text-glow { animation: text-glow 2s ease-in-out infinite; }
+.animate-pulse-logo { animation: pulse-logo 2.5s ease-in-out infinite; }
+.animate-fade-in-down { animation: fade-in-down 0.5s ease-out forwards; }
+.animate-pulse-shadow { animation: pulse-shadow 2s infinite; }

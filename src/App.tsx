@@ -1,0 +1,266 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Bell, Search, Home, MessageSquare, Gamepad2, Settings, Video 
+} from 'lucide-react';
+import { TabType, ChatModeType } from './types';
+import { 
+  HomeTab, ChatTab, GamesTab, SearchTab, ProfileTab, NavItem, DmConversation, SettingsModal, AuthScreen, NotificationsModal, NovaScreen
+} from './components';
+import { auth } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [chatMode, setChatMode] = useState<ChatModeType>('global');
+  const [activeDm, setActiveDm] = useState<any | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsView, setSettingsView] = useState<'main' | 'account' | 'notifications' | 'security' | 'appearance' | 'help'>('main');
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [theme, setTheme] = useState<'light'|'dark'|'system'>(() => {
+    return (localStorage.getItem('connect-theme') as 'light'|'dark'|'system') || 'system';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('connect-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
+    }
+  }, [theme]);
+
+  // Handle system theme changes
+  useEffect(() => {
+    if (theme !== 'system') return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      const root = window.document.documentElement;
+      root.classList.remove('light', 'dark');
+      root.classList.add(e.matches ? 'dark' : 'light');
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser({
+          uid: user.uid,
+          name: user.displayName || (user.isAnonymous ? 'Guest User' : 'User'),
+          avatar: user.photoURL || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80'
+        });
+      } else {
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Handle hardware back button for app-level modals (DMs, Settings, Notifications)
+  React.useEffect(() => {
+    const handlePopState = () => {
+      if (activeDm) setActiveDm(null);
+      if (isSettingsOpen) setIsSettingsOpen(false);
+      if (isNotificationsOpen) setIsNotificationsOpen(false);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeDm, isSettingsOpen, isNotificationsOpen]);
+
+  const openDm = (user: any) => {
+    setActiveDm(user);
+    window.history.pushState({ modal: 'dm' }, '');
+  };
+
+  const closeDm = () => {
+    if (window.history.state?.modal === 'dm') {
+      window.history.back();
+    } else {
+      setActiveDm(null);
+    }
+  };
+
+  const openSettings = (view: 'main' | 'account' | 'notifications' | 'security' | 'appearance' | 'help' = 'main') => {
+    setSettingsView(view);
+    setIsSettingsOpen(true);
+    window.history.pushState({ modal: 'settings' }, '');
+  };
+
+  const closeSettings = () => {
+    if (window.history.state?.modal === 'settings') {
+      window.history.back();
+    } else {
+      setIsSettingsOpen(false);
+    }
+  };
+
+  const openNotifications = () => {
+    setIsNotificationsOpen(true);
+    window.history.pushState({ modal: 'notifications' }, '');
+  };
+
+  const closeNotifications = () => {
+    if (window.history.state?.modal === 'notifications') {
+      window.history.back();
+    } else {
+      setIsNotificationsOpen(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="h-[100dvh] w-full bg-neutral-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <AuthScreen onLogin={setCurrentUser} />;
+  }
+
+  return (
+    <div className="h-[100dvh] w-full bg-neutral-100 font-sans flex justify-center overflow-hidden text-slate-900">
+      {/* Main App Container */}
+      <div className="relative w-full h-full md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden bg-[#faf9f6] shadow-2xl sm:border-x border-black/5 flex flex-col">
+        
+        {/* Soft Multi-color Gradient Background (mostly for Home and Profile) */}
+        {activeTab !== 'chat' && (
+          <div className="fixed inset-0 app-bg-gradient pointer-events-none z-0" />
+        )}
+        {activeTab === 'chat' && (
+          <div className="absolute inset-0 app-bg-secondary opacity-100 z-0" />
+        )}
+
+        {/* Scrollable Content View */}
+        <div className="flex-1 overflow-x-hidden overflow-y-auto no-scrollbar pb-[110px] pt-8 sm:pt-12 px-5 relative z-10 flex flex-col">
+          
+          {/* Main Header Row (Hidden on Chat Tab as it has its own header) */}
+          {activeTab !== 'chat' && (
+            <div className="flex items-center justify-between mb-8 shrink-0">
+              <h1 className="text-[28px] font-black text-slate-900 tracking-tight flex items-center gap-[1px]">
+                C<span className="relative inline-flex justify-center items-center">
+                  o<span className="absolute w-[120%] h-[2.5px] bg-slate-900 rotate-[-45deg] rounded-full"></span>
+                </span>nnect
+              </h1>
+              <div className="flex gap-3">
+                <button 
+                  onClick={openNotifications}
+                  className="relative w-[42px] h-[42px] bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm border border-white/40 hover:bg-white/60 transition-colors"
+                >
+                  <Bell className="w-5 h-5 text-slate-800" strokeWidth={2.5} />
+                  <span className="absolute top-2.5 right-2 w-[10px] h-[10px] bg-rose-500 rounded-full border-[1.5px] border-white shadow-sm"></span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('profile')} 
+                  className={`w-[42px] h-[42px] p-[2px] backdrop-blur-md rounded-full flex items-center justify-center shadow-sm border transition-all ${activeTab === 'profile' ? 'bg-[#173e35] border-[#173e35]' : 'bg-white/50 border-white/40 hover:bg-white/60'}`}
+                >
+                  <img src={currentUser.avatar} className="w-full h-full rounded-full object-cover" alt="Profile" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Dynamic Content */}
+          <div className="w-full flex-1 flex flex-col relative" key={activeTab}>
+            {activeTab === 'home' && <HomeTab />}
+            {activeTab === 'chat' && <ChatTab chatMode={chatMode} setChatMode={setChatMode} onSelectDm={openDm} />}
+            {activeTab === 'games' && <GamesTab />}
+            {activeTab === 'search' && <SearchTab onSelectDm={openDm} />}
+            {activeTab === 'profile' && <ProfileTab onEditProfile={() => openSettings('account')} onOpenSettings={() => openSettings()} />}
+            {activeTab === 'video' && (
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-6 animate-slide-up">
+                <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                  <Video className="w-12 h-12 text-rose-500" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Video Call</h2>
+                <p className="text-slate-500 max-w-xs font-medium leading-relaxed">
+                  Connect randomly with anyone around the world. Our Omegle-style video chat is coming soon!
+                </p>
+                <div className="mt-8 px-6 py-2 bg-slate-900 text-white rounded-full text-sm font-bold tracking-wide uppercase opacity-50 cursor-not-allowed">
+                  Under Development
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+
+
+        {/* Floating Bottom Navigation */}
+        <div className="absolute bottom-5 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl h-[76px] bg-white/75 backdrop-blur-2xl md:rounded-[38px] rounded-[28px] border-[1.5px] border-white shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-between px-5 md:px-8 z-50">
+          <NavItem 
+            icon={<Home className={`w-6 h-6 ${activeTab === 'home' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.5}/>} 
+            label="HOME" 
+            active={activeTab === 'home'} 
+            onClick={() => setActiveTab('home')}
+          />
+          <NavItem 
+            icon={<MessageSquare className={`w-[22px] h-[22px] ${activeTab === 'chat' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.2}/>} 
+            label="GLOBAL CHAT" 
+            active={activeTab === 'chat'} 
+            onClick={() => { setActiveTab('chat'); setChatMode('global'); }}
+          />
+          <NavItem 
+            icon={<Gamepad2 className={`w-6 h-6 ${activeTab === 'games' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.2} />} 
+            label="GAMES" 
+            active={activeTab === 'games'}
+            onClick={() => setActiveTab('games')}
+          />
+          <NavItem 
+            icon={<Search className={`w-[22px] h-[22px] ${activeTab === 'search' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.2} />} 
+            label="SEARCH" 
+            active={activeTab === 'search'}
+            onClick={() => setActiveTab('search')}
+          />
+          <NavItem 
+            icon={<Video className={`w-6 h-6 ${activeTab === 'video' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.2} />} 
+            label="CONNECT" 
+            active={activeTab === 'video'}
+            onClick={() => setActiveTab('video')}
+          />
+        </div>
+        
+        
+        {activeDm && (
+          activeDm.userId === 'nova_ai' ? (
+            <NovaScreen onClose={closeDm} />
+          ) : (
+            <DmConversation user={activeDm} onClose={closeDm} />
+          )
+        )}
+        
+        {isSettingsOpen && (
+          <SettingsModal 
+            onClose={closeSettings} 
+            onLogout={() => {
+              if (window.confirm("Are you sure you want to log out?")) {
+                auth.signOut();
+                closeSettings();
+              }
+            }} 
+            initialView={settingsView}
+            theme={theme}
+            setTheme={setTheme}
+          />
+        )}
+        
+        {isNotificationsOpen && (
+          <NotificationsModal onClose={closeNotifications} />
+        )}
+      </div>
+    </div>
+  );
+}

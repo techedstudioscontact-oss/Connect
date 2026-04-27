@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global function to check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Validate global chat schema
+    function isValidGlobalMessage(data) {
+      return data.keys().hasAll(['text', 'userId', 'userName', 'userAvatar', 'timestamp']) &&
+             data.text is string && data.text.size() > 0 && data.text.size() <= 1000 &&
+             data.userId == request.auth.uid;
+    }
+
+    // Validate post schema
+    function isValidPost(data) {
+      return data.keys().hasAll(['content', 'authorId', 'authorName', 'authorAvatar', 'timestamp', 'likes', 'comments', 'shares']) &&
+             data.content is string && data.content.size() <= 5000 &&
+             data.authorId == request.auth.uid;
+    }
+
+    // 1. Users Collection (Recursive to include Nova history and preferences)
+    match /users/{userId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // 2. Global Chat Messages
+    match /global_chat/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidGlobalMessage(request.resource.data);
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
+    // 3. Posts
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidPost(request.resource.data);
+      // Allow update if owner OR if only updating likes count
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.authorId) || 
+        (resource.data.keys().has('author') && isOwner(resource.data.author.id)) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy', 'shares', 'comments'])
+      );
+      allow delete: if isSignedIn() && (isOwner(resource.data.authorId) || (resource.data.keys().has('author') && isOwner(resource.data.author.id)));
+      
+      // Comments Subcollection
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && 
+          request.resource.data.keys().hasAll(['content', 'authorId', 'authorName', 'authorAvatar', 'timestamp']) &&
+          request.resource.data.authorId == request.auth.uid;
+        allow delete: if isSignedIn() && isOwner(resource.data.authorId);
+      }
+    }
+
+    // 4. Direct Messages (Friends & AI)
+    match /dms/{chatId} {
+      // Allow get even if doc doesn't exist yet, but only if the ID is potentially yours
+      allow get: if isSignedIn(); 
+      allow list: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/dms/$(chatId)).data.participants;
+        allow create: if isSignedIn() && 
+          request.auth.uid in get(/databases/$(database)/documents/dms/$(chatId)).data.participants &&
+          request.resource.data.senderId == request.auth.uid;
+      }
+    }
+    // 5. Friend Requests
+    match /friend_requests/{requestId} {
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.from;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.to;
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
+    }
+    // 6. Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.to;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.from;
+      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.to;
+    }
+  }
+}
