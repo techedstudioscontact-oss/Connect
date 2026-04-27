@@ -13,6 +13,7 @@ import { CallModal } from './components';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Peer from 'peerjs';
+import 'webrtc-adapter';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -135,19 +136,48 @@ export default function App() {
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    const newPeer = new Peer(currentUser.uid);
+    const newPeer = new Peer(currentUser.uid, {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+        ]
+      }
+    });
     setPeer(newPeer);
 
-    newPeer.on('call', (call) => {
-      // Find user info for the caller (this would ideally come from a signal or Firebase)
-      // For now, we'll show a generic incoming call and fetch name later
+    newPeer.on('call', async (call) => {
+      // Fetch the actual user data for the caller from Firestore
+      let callerName = 'Someone';
+      let callerAvatar = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80';
+      
+      try {
+        const callerDoc = await getDoc(doc(db, 'users', call.peer));
+        if (callerDoc.exists()) {
+          const data = callerDoc.data();
+          callerName = data.displayName || data.name || 'User';
+          callerAvatar = data.photoURL || data.avatar || callerAvatar;
+        }
+      } catch (e) {
+        console.error("Error fetching caller details:", e);
+      }
+
       setIncomingCall(call);
       setActiveCall({ 
-        user: { id: call.peer, name: 'Incoming Call...', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80' }, 
+        user: { id: call.peer, name: callerName, avatar: callerAvatar }, 
         isVideo: true, 
         isIncoming: true 
       });
       window.history.pushState({ modal: 'call' }, '');
+    });
+
+    newPeer.on('open', (id) => {
+      console.log('My Peer ID is: ' + id);
+    });
+
+    newPeer.on('error', (err) => {
+      console.error('PeerJS error:', err);
     });
 
     return () => {
