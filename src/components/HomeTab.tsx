@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Send, MoreHorizontal, Play, Image as ImageIcon, Video, MapPin, X, Search, CheckCircle2, Circle, Trash2, Edit2, ChevronDown } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { getGreeting, formatTime } from '../lib/utils';
 import { collection, addDoc, query, orderBy, onSnapshot, limit, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { Link as LinkIcon, Flag } from 'lucide-react';
+import { uploadMedia } from '../lib/firebaseUtils';
 
 interface Post {
   id: string;
@@ -192,18 +193,8 @@ export function HomeTab() {
 
     try {
       if (selectedImage) {
-        const formData = new FormData();
-        formData.append('file', selectedImage.file);
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) {
-          const data = await res.json();
-          imageUrl = data.secure_url;
-        } else {
-          console.error('Failed to upload image');
-        }
+        const { url } = await uploadMedia(selectedImage.file, auth.currentUser.uid, 'post');
+        imageUrl = url;
       }
 
       const newPostData = {
@@ -285,20 +276,9 @@ export function HomeTab() {
     let imageUrl = editSelectedImage?.url || null;
 
     try {
-      // If there's a new file selected, upload it
       if (editSelectedImage?.file) {
-        const formData = new FormData();
-        formData.append('file', editSelectedImage.file);
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) {
-          const data = await res.json();
-          imageUrl = data.secure_url;
-        } else {
-          console.error('Failed to upload image');
-        }
+        const { url } = await uploadMedia(editSelectedImage.file, auth.currentUser.uid, 'post');
+        imageUrl = url;
       }
 
       const postRef = doc(db, 'posts', editingPost.id);

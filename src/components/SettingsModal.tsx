@@ -13,6 +13,7 @@ import {
 import { auth, db } from '../lib/firebase';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { uploadMedia } from '../lib/firebaseUtils';
 
 type SettingsView = 'main' | 'account' | 'notifications' | 'security' | 'appearance' | 'help';
 
@@ -56,20 +57,11 @@ export function SettingsModal({ onClose, onLogout, initialView = 'main', theme =
 
     setSaving(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const { url } = await uploadMedia(file, auth.currentUser.uid, 'profile');
       
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      
-      await updateProfile(auth.currentUser, { photoURL: data.secure_url });
-      await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: data.secure_url }, { merge: true });
-      setProfilePicUrl(data.secure_url);
+      await updateProfile(auth.currentUser, { photoURL: url });
+      await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url }, { merge: true });
+      setProfilePicUrl(url);
     } catch (err) {
       console.error("Error uploading profile pic:", err);
       alert("Failed to upload image. Please check your connection.");

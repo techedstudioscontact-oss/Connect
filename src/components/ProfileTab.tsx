@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { LayoutGrid, Heart, Camera, X, Settings } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { updateProfile } from 'firebase/auth';
-import { collection, query, where, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { uploadMedia } from '../lib/firebaseUtils';
+import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { formatTime } from '../lib/utils';
 
 interface ProfileTabProps {
@@ -65,21 +66,12 @@ export function ProfileTab({ onEditProfile, onOpenSettings }: ProfileTabProps) {
     if (file && auth.currentUser) {
       setUploading(true);
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const imageUrl = data.secure_url;
-          setProfilePic(imageUrl);
-          
-          await updateProfile(auth.currentUser, { photoURL: imageUrl });
-          const userRef = doc(db, 'users', auth.currentUser.uid);
-          await setDoc(userRef, { photoURL: imageUrl }, { merge: true });
-        }
+        const { url } = await uploadMedia(file, auth.currentUser.uid, 'profile');
+        setProfilePic(url);
+        
+        await updateProfile(auth.currentUser, { photoURL: url });
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await setDoc(userRef, { photoURL: url }, { merge: true });
       } catch (err) {
         console.error("Error uploading profile pic:", err);
       } finally {
