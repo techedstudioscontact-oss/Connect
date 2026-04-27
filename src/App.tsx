@@ -159,13 +159,13 @@ export default function App() {
   useEffect(() => {
     const backListener = CapApp.addListener('backButton', () => {
       if (viewingUser) {
-        setViewingUser(null);
+        closeUserProfile();
       } else if (activeDm) {
-        setActiveDm(null);
+        closeDm();
       } else if (isSettingsOpen) {
-        setIsSettingsOpen(false);
+        closeSettings();
       } else if (isNotificationsOpen) {
-        setIsNotificationsOpen(false);
+        closeNotifications();
       } else if (activeTab !== 'home') {
         setActiveTab('home');
       } else {

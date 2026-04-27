@@ -26,6 +26,8 @@ export function UserProfile({ user, onClose, onMessage }: UserProfileProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
+  if (!user || !user.id) return null;
+
   useEffect(() => {
     // Fetch full user details from Firestore
     const fetchUserDetails = async () => {
@@ -146,7 +148,7 @@ export function UserProfile({ user, onClose, onMessage }: UserProfileProps) {
             <Shield className="w-5 h-5 text-emerald-500" />
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">
-            @{user.id.substring(0, 8)}
+            @{user?.id?.substring(0, 8)}
           </p>
           
           <p className="mt-4 text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
