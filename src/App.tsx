@@ -12,8 +12,7 @@ import { App as CapApp } from '@capacitor/app';
 import { CallModal } from './components';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import Peer from 'peerjs';
-import 'webrtc-adapter';
+import { doc, onSnapshot, setDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -30,8 +29,6 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(true);
   const [viewingUser, setViewingUser] = useState<any | null>(null);
   const [activeCall, setActiveCall] = useState<any | null>(null);
-  const [peer, setPeer] = useState<Peer | null>(null);
-  const [incomingCall, setIncomingCall] = useState<any | null>(null);
 
   // Request native permissions on mount
   useEffect(() => {
@@ -132,61 +129,34 @@ export default function App() {
     };
   }, []);
 
-  // Initialize PeerJS for incoming calls
+  // Listen for incoming calls via Firestore (Signaling)
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    const newPeer = new Peer(currentUser.uid, {
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478' }
-        ]
-      }
-    });
-    setPeer(newPeer);
-
-    newPeer.on('call', async (call) => {
-      // Fetch the actual user data for the caller from Firestore
-      let callerName = 'Someone';
-      let callerAvatar = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80';
-      
-      try {
-        const callerDoc = await getDoc(doc(db, 'users', call.peer));
-        if (callerDoc.exists()) {
-          const data = callerDoc.data();
-          callerName = data.displayName || data.name || 'User';
-          callerAvatar = data.photoURL || data.avatar || callerAvatar;
+    const callRef = doc(db, 'calls', currentUser.uid);
+    const unsubCalls = onSnapshot(callRef, async (snap) => {
+      if (snap.exists()) {
+        const callData = snap.data();
+        if (callData.status === 'incoming' && !activeCall) {
+          // Fetch caller details
+          const callerDoc = await getDoc(doc(db, 'users', callData.from));
+          const callerData = callerDoc.data();
+          
+          setActiveCall({
+            user: { 
+              id: callData.from, 
+              name: callerData?.displayName || 'Someone', 
+              avatar: callerData?.photoURL || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80' 
+            },
+            isIncoming: true
+          });
+          window.history.pushState({ modal: 'call' }, '');
         }
-      } catch (e) {
-        console.error("Error fetching caller details:", e);
       }
-
-      setIncomingCall(call);
-      setActiveCall({ 
-        user: { id: call.peer, name: callerName, avatar: callerAvatar }, 
-        isVideo: true, 
-        isIncoming: true 
-      });
-      window.history.pushState({ modal: 'call' }, '');
     });
 
-    newPeer.on('open', (id) => {
-      console.log('My Peer ID is: ' + id);
-    });
-
-    newPeer.on('error', (err) => {
-      console.error('PeerJS error:', err);
-    });
-
-    return () => {
-      newPeer.destroy();
-    };
-  }, [currentUser?.uid]);
+    return () => unsubCalls();
+  }, [currentUser?.uid, activeCall]);
 
   // Handle hardware back button for app-level modals (DMs, Settings, Notifications)
   useEffect(() => {
@@ -280,17 +250,39 @@ export default function App() {
     openDm(user);
   };
 
-  const startCall = (user: any, isVideo: boolean = false) => {
-    setActiveCall({ user, isVideo });
-    window.history.pushState({ modal: 'call' }, '');
+  const startCall = async (user: any, isVideo: boolean = false) => {
+    if (!currentUser) return;
+    
+    // Signal the other user via Firestore
+    try {
+      await setDoc(doc(db, 'calls', user.id || user.userId), {
+        from: currentUser.uid,
+        status: 'incoming',
+        isVideo,
+        timestamp: serverTimestamp()
+      });
+      
+      setActiveCall({ user, isVideo });
+      window.history.pushState({ modal: 'call' }, '');
+    } catch (e) {
+      console.error("Error initiating call:", e);
+    }
   };
 
-  const closeCall = () => {
+  const closeCall = async () => {
+    if (currentUser && activeCall) {
+      // Clean up signaling
+      const targetId = activeCall.user.id || activeCall.user.userId;
+      if (targetId) {
+        await deleteDoc(doc(db, 'calls', targetId));
+      }
+      await deleteDoc(doc(db, 'calls', currentUser.uid));
+    }
+
     if (window.history.state?.modal === 'call') {
       window.history.back();
     } else {
       setActiveCall(null);
-      setIncomingCall(null);
     }
   };
 
@@ -444,8 +436,6 @@ export default function App() {
           <CallModal 
             otherUser={activeCall.user} 
             isIncoming={activeCall.isIncoming}
-            incomingCall={incomingCall}
-            peer={peer}
             onClose={closeCall} 
           />
         )}
