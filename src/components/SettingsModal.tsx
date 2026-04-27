@@ -62,6 +62,9 @@ export function SettingsModal({ onClose, onLogout, initialView = 'main', theme =
       await updateProfile(auth.currentUser, { photoURL: url });
       await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url }, { merge: true });
       setProfilePicUrl(url);
+      
+      // Dispatch event so the main App header updates instantly
+      window.dispatchEvent(new Event('profileUpdated'));
     } catch (err) {
       console.error("Error uploading profile pic:", err);
       alert("Failed to upload image. Please check your connection.");

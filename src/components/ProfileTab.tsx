@@ -72,6 +72,9 @@ export function ProfileTab({ onEditProfile, onOpenSettings }: ProfileTabProps) {
         await updateProfile(auth.currentUser, { photoURL: url });
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await setDoc(userRef, { photoURL: url }, { merge: true });
+        
+        // Dispatch event so the main App header updates instantly
+        window.dispatchEvent(new Event('profileUpdated'));
       } catch (err) {
         console.error("Error uploading profile pic:", err);
       } finally {

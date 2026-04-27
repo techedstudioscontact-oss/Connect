@@ -81,7 +81,24 @@ export default function App() {
       }
       setAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    // Listen for custom profile update events to refresh the header instantly
+    const handleProfileUpdate = async () => {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        setCurrentUser({
+          uid: auth.currentUser.uid,
+          name: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Guest User' : 'User'),
+          avatar: auth.currentUser.photoURL || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80'
+        });
+      }
+    };
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   // Handle hardware back button for app-level modals (DMs, Settings, Notifications)
