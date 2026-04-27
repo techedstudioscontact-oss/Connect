@@ -42,8 +42,13 @@ export function CallModal({ otherUser, isIncoming, incomingCall, peer, onClose }
           // If we are answering, we wait for the user to click Answer
           setActiveCall(incomingCall);
         } else if (!isIncoming) {
-          // Start the outgoing call
-          const call = peer.call(otherUser.id, myStream);
+          // Start the outgoing call - try userId then id
+          const targetId = (otherUser as any).userId || otherUser.id;
+          if (!targetId) {
+            setCallStatus('Invalid User ID');
+            return;
+          }
+          const call = peer.call(targetId, myStream);
           setActiveCall(call);
           call.on('stream', (remoteMediaStream: MediaStream) => {
             setCallStatus('Connected');
