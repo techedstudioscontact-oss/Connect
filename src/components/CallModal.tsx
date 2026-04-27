@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import AgoraRTC, { IAgoraRTCClient, ICameraVideoTrack, IMicrophoneAudioTrack, IRemoteVideoTrack, IRemoteAudioTrack } from 'agora-rtc-sdk-ng';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Shield, X } from 'lucide-react';
+import AgoraRTC, { IAgoraRTCClient, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
+import { PhoneOff, Video, VideoOff, Mic, MicOff, Shield } from 'lucide-react';
 import { auth } from '../lib/firebase';
 
+// AGORA CONFIG
 const AGORA_APP_ID = "1b75e27efac34b7395a8909646675de8";
+const AGORA_CERTIFICATE = "4e4fb2351df5414dbb31582eb783f8a6"; // Use this on backend for real security
 
 interface CallModalProps {
   otherUser: {
@@ -33,7 +35,6 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
     const init = async () => {
       client.current = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
       
-      // Listen for remote users joining
       client.current.on("user-published", async (user, mediaType) => {
         await client.current?.subscribe(user, mediaType);
         if (mediaType === "video") {
@@ -54,15 +55,18 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
         }
       });
 
-      // Generate a unique channel name based on both user IDs (sorted)
       const currentUserId = auth.currentUser?.uid;
       if (!currentUserId || !otherUser.id) return;
       const ids = [currentUserId, otherUser.id].sort();
       const channelName = `connact_v_${ids[0]}_${ids[1]}`;
 
       try {
-        // For development/demo, we use null for token (ensure your project has "App ID only" auth enabled in Agora Console)
-        await client.current.join(AGORA_APP_ID, channelName, null, currentUserId);
+        // NOTE: In a real production app, you fetch this token from your Firebase Cloud Function
+        // For now, if you have enabled "App Certificate", you MUST provide a token.
+        // If you are testing, you can generate a Temporary Token in Agora Console and paste it here:
+        const token = null; // Replace with a dynamic token from a backend server later
+
+        await client.current.join(AGORA_APP_ID, channelName, token, currentUserId);
         
         localAudioTrack.current = await AgoraRTC.createMicrophoneAudioTrack();
         localVideoTrack.current = await AgoraRTC.createCameraVideoTrack();
@@ -73,9 +77,14 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
 
         await client.current.publish([localAudioTrack.current, localVideoTrack.current]);
         setJoined(true);
-      } catch (e) {
+      } catch (e: any) {
         console.error("Agora join failed", e);
-        setCallStatus('Connection Failed');
+        if (e.message.includes("token")) {
+           setCallStatus('Security Token Required');
+           alert("Security Alert: Your Agora project has 'App Certificate' enabled. You must either generate a token via a backend server or disable 'App Certificate' in Agora Console for testing.");
+        } else {
+           setCallStatus('Connection Failed');
+        }
       }
     };
 
@@ -109,7 +118,7 @@ export function CallModal({ otherUser, isIncoming, onClose }: CallModalProps) {
   return (
     <div className="fixed inset-0 z-[1000] bg-slate-900 flex flex-col items-center justify-center animate-fade-in text-white overflow-hidden">
       {/* Remote Video (Full Screen) */}
-      <div ref={remoteVideoRef} className="absolute inset-0 w-full h-full bg-slate-800 object-cover">
+      <div ref={remoteVideoRef} className="absolute inset-0 w-full h-full bg-slate-800">
          {!remoteUser && (
            <div className="flex flex-col items-center gap-6 mt-[-100px]">
              <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-emerald-400 to-indigo-500 animate-pulse">
