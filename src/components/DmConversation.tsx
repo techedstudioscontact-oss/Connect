@@ -189,12 +189,12 @@ export function DmConversation({ user, onClose }: DmConversationProps) {
   };
 
   return (
-    <div className="absolute inset-0 z-[200] app-bg-secondary flex flex-col animate-slide-up pointer-events-auto">
+    <div className="absolute inset-0 z-[200] app-bg-secondary dark:bg-[#0c1222] flex flex-col animate-slide-up pointer-events-auto">
       {/* Background Subtle Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-indigo-500/5 opacity-50 z-0 pointer-events-none" />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-4 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-[0_2px_15px_rgb(0,0,0,0.03)] pt-10 sm:pt-6">
+      <div className="relative z-10 flex items-center justify-between px-4 py-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/50 dark:border-slate-800/50 shadow-[0_2px_15px_rgb(0,0,0,0.03)] pt-10 sm:pt-6">
         <div className="flex items-center gap-3">
           <button 
             onClick={onClose}
@@ -211,7 +211,7 @@ export function DmConversation({ user, onClose }: DmConversationProps) {
               )}
             </div>
             <div>
-              <h2 className="text-[16px] font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+              <h2 className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
                 {user.name}
                 {user.name === 'Nova (AI)' && <Sparkles className="w-3.5 h-3.5 text-indigo-500" />}
               </h2>
@@ -249,8 +249,8 @@ export function DmConversation({ user, onClose }: DmConversationProps) {
                 <div 
                   className={`p-3.5 px-5 text-[14.5px] leading-snug shadow-sm ${
                     isMe 
-                      ? 'bg-slate-900 text-white rounded-[24px] rounded-br-[8px]' 
-                      : 'bg-white text-slate-800 rounded-[24px] rounded-bl-[8px] border border-slate-100'
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[24px] rounded-br-[8px]' 
+                      : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-[24px] rounded-bl-[8px] border border-slate-100 dark:border-slate-700'
                   }`}
                 >
                   {msg.text}

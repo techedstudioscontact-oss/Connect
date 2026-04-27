@@ -131,9 +131,9 @@ export default function App() {
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-neutral-100 font-sans flex justify-center overflow-hidden text-slate-900">
+    <div className="h-[100dvh] w-full bg-neutral-100 dark:bg-slate-950 font-sans flex justify-center overflow-hidden text-slate-900 dark:text-slate-100">
       {/* Main App Container */}
-      <div className="relative w-full h-full md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden bg-[#faf9f6] shadow-2xl sm:border-x border-black/5 flex flex-col">
+      <div className="relative w-full h-full md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden bg-[#faf9f6] dark:bg-[#0c1222] shadow-2xl sm:border-x border-black/5 flex flex-col">
         
         {/* Soft Multi-color Gradient Background (mostly for Home and Profile) */}
         {activeTab !== 'chat' && (
@@ -149,15 +149,15 @@ export default function App() {
           {/* Main Header Row (Hidden on Chat Tab as it has its own header) */}
           {activeTab !== 'chat' && (
             <div className="flex items-center justify-between mb-8 shrink-0">
-              <h1 className="text-[28px] font-black text-slate-900 tracking-tight flex items-center gap-[1px]">
+              <h1 className="text-[28px] font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-[1px]">
                 C<span className="relative inline-flex justify-center items-center">
-                  o<span className="absolute w-[120%] h-[2.5px] bg-slate-900 rotate-[-45deg] rounded-full"></span>
+                  o<span className="absolute w-[120%] h-[2.5px] bg-slate-900 dark:bg-white rotate-[-45deg] rounded-full"></span>
                 </span>nnect
               </h1>
               <div className="flex gap-3">
                 <button 
                   onClick={openNotifications}
-                  className="relative w-[42px] h-[42px] bg-white/50 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm border border-white/40 hover:bg-white/60 transition-colors"
+                  className="relative w-[42px] h-[42px] bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm border border-white/40 dark:border-slate-700/40 hover:bg-white/60 dark:hover:bg-slate-700/60 transition-colors"
                 >
                   <Bell className="w-5 h-5 text-slate-800" strokeWidth={2.5} />
                   <span className="absolute top-2.5 right-2 w-[10px] h-[10px] bg-rose-500 rounded-full border-[1.5px] border-white shadow-sm"></span>
@@ -200,7 +200,7 @@ export default function App() {
 
 
         {/* Floating Bottom Navigation */}
-        <div className="absolute bottom-5 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl h-[76px] bg-white/75 backdrop-blur-2xl md:rounded-[38px] rounded-[28px] border-[1.5px] border-white shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-between px-5 md:px-8 z-50">
+        <div className="absolute bottom-5 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl h-[76px] bg-white/75 dark:bg-slate-900/75 backdrop-blur-2xl md:rounded-[38px] rounded-[28px] border-[1.5px] border-white dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center justify-between px-5 md:px-8 z-50">
           <NavItem 
             icon={<Home className={`w-6 h-6 ${activeTab === 'home' ? 'text-[#173e35]' : 'text-slate-500'}`} strokeWidth={2.5}/>} 
             label="HOME" 

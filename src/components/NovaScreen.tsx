@@ -964,7 +964,7 @@ You must actively analyze the user's speech cues and switch modes INSTANTLY with
                     <div className="w-16 h-16 mb-2 rounded-full overflow-hidden border-2 border-purple-500/30 shadow-lg shadow-purple-500/20">
                         <img src={novaAvatar} alt="Nova Avatar" className="w-full h-full object-cover" />
                     </div>
-                    <h1 className="font-bold text-xl flex items-center space-x-2"><SparklesIcon className="h-5 w-5 text-purple-500"/><span>Nova</span></h1>
+                    <h1 className="font-bold text-xl flex items-center space-x-2 text-gray-900 dark:text-white"><SparklesIcon className="h-5 w-5 text-purple-500"/><span>Nova</span></h1>
                     <div className="flex items-center space-x-1.5 px-2 py-0.5 bg-purple-500/10 rounded-full border border-purple-500/20">
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></div>
                         <span className="text-[10px] font-bold text-purple-400 uppercase tracking-tighter">
@@ -981,7 +981,7 @@ You must actively analyze the user's speech cues and switch modes INSTANTLY with
                 </div>
             </header>
 
-            <main ref={scrollViewportRef} onScroll={handleScroll} className="flex-grow p-4 overflow-y-auto space-y-6 scrollbar-hide relative bg-[#0a0a0a]">
+            <main ref={scrollViewportRef} onScroll={handleScroll} className="flex-grow p-4 overflow-y-auto space-y-6 scrollbar-hide relative bg-neutral-50 dark:bg-[#0a0a0a]">
                 {messages.length === 0 && !loading && (
                     <div className="flex flex-col items-center justify-center py-20 text-center opacity-60">
                         <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-purple-500/20 overflow-hidden border-4 border-gray-800">
@@ -996,7 +996,7 @@ You must actively analyze the user's speech cues and switch modes INSTANTLY with
                 {messages.map((msg) => (
                     <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         {msg.role === 'model' && <img src={novaAvatar} alt="Nova" className="w-8 h-8 rounded-full flex-shrink-0 shadow-sm border border-gray-700"/>}
-                        <div className={`p-4 rounded-2xl relative ${msg.role === 'user' ? 'bg-sky-500 text-white rounded-br-none max-w-[85%] ml-auto' : 'bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-bl-none w-full shadow-sm'}`}>
+                        <div className={`p-4 rounded-2xl relative ${msg.role === 'user' ? 'bg-sky-500 text-white rounded-br-none max-w-[85%] ml-auto' : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none w-full shadow-sm'}`}>
                             {msg.uploadedImageUrl && <img src={msg.uploadedImageUrl} alt="user upload" className="rounded-lg mb-2 max-h-48" />}
                             {msg.imageUrl && <img src={msg.imageUrl} alt="generated content" className="rounded-lg mb-2" />}
                             {msg.videoUrl && (<video controls src={msg.videoUrl} className="rounded-lg mb-2 w-full aspect-video bg-black" />)}
@@ -1008,7 +1008,7 @@ You must actively analyze the user's speech cues and switch modes INSTANTLY with
                         {msg.role === 'user' && <img src={userProfile?.avatar} alt="user avatar" className="w-8 h-8 rounded-full flex-shrink-0"/>}
                     </motion.div>
                 ))}
-                 {loading && <div className="flex items-start gap-3 justify-start"><img src={novaAvatar} alt="Nova" className="w-8 h-8 rounded-full flex-shrink-0 shadow-sm border border-gray-700 animate-pulse"/><div className="p-3 rounded-2xl w-full max-w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-bl-none shadow-sm"><div className="flex items-center space-x-2"><LoadingSpinner /><p className="text-sm text-gray-600 dark:text-gray-400">{generationMessage || 'Thinking...'}</p></div></div></div>}
+                 {loading && <div className="flex items-start gap-3 justify-start"><img src={novaAvatar} alt="Nova" className="w-8 h-8 rounded-full flex-shrink-0 shadow-sm border border-gray-700 animate-pulse"/><div className="p-3 rounded-2xl w-full max-w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-none shadow-sm"><div className="flex items-center space-x-2"><LoadingSpinner /><p className="text-sm text-gray-600 dark:text-gray-400">{generationMessage || 'Thinking...'}</p></div></div></div>}
                  {activeSkill === 'voice' && voiceConnectionState !== 'idle' && <div className="p-4 bg-white/50 dark:bg-black/50 rounded-lg border border-gray-200 dark:border-gray-800">{liveTranscription.userInput && <div className="text-sm text-gray-500 dark:text-gray-400 text-right italic p-2">{liveTranscription.userInput}</div>}{liveTranscription.modelOutput && <div className="text-sm text-sky-700 dark:text-sky-300 p-2">{liveTranscription.modelOutput}</div>}{voiceConnectionState === 'connecting' && <div className="flex items-center space-x-2 text-gray-500"><LoadingSpinner size="sm" /><p>Connecting...</p></div>}</div>}
                  <div ref={bottomTargetRef} />
             </main>
