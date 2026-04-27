@@ -9,3 +9,5 @@ export * from './SettingsModal';
 export * from './AuthScreen';
 export * from './NotificationsModal';
 export * from './NovaScreen';
+export * from './UserProfile';
+export * from './CallModal';

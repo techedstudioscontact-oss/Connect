@@ -39,7 +39,7 @@ interface Comment {
 
 const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80";
 
-export function HomeTab() {
+export function HomeTab({ onViewProfile }: { onViewProfile: (user: any) => void }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPostText, setNewPostText] = useState('');
   const [selectedImage, setSelectedImage] = useState<{ url: string, file: File } | null>(null);
@@ -503,8 +503,24 @@ export function HomeTab() {
             <div key={post.id} className="bg-white/80 backdrop-blur-xl rounded-[32px] p-4 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-white/60">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-3">
-                  <img src={post.author?.avatar || DEFAULT_AVATAR} alt={post.author?.name} className="w-[42px] h-[42px] object-cover rounded-full shadow-sm cursor-pointer" />
-                  <div>
+                  <img 
+                    src={post.author?.avatar || DEFAULT_AVATAR} 
+                    alt={post.author?.name} 
+                    className="w-[42px] h-[42px] object-cover rounded-full shadow-sm cursor-pointer active:scale-95 transition-transform" 
+                    onClick={() => onViewProfile({ 
+                      id: post.authorId || post.author?.id, 
+                      name: post.authorName || post.author?.name, 
+                      avatar: post.author?.avatar || post.authorAvatar || DEFAULT_AVATAR 
+                    })}
+                  />
+                  <div 
+                    className="cursor-pointer"
+                    onClick={() => onViewProfile({ 
+                      id: post.authorId || post.author?.id, 
+                      name: post.authorName || post.author?.name, 
+                      avatar: post.author?.avatar || post.authorAvatar || DEFAULT_AVATAR 
+                    })}
+                  >
                     <h3 className="text-[14px] font-bold text-slate-900 leading-tight flex items-center gap-2">
                        {post.authorName || post.author?.name || post.author?.username || '@user'}
                     </h3>

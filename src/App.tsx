@@ -4,12 +4,14 @@ import {
 } from 'lucide-react';
 import { TabType, ChatModeType } from './types';
 import { 
-  HomeTab, ChatTab, GamesTab, SearchTab, ProfileTab, NavItem, DmConversation, SettingsModal, AuthScreen, NotificationsModal, NovaScreen
+  HomeTab, ChatTab, GamesTab, SearchTab, ProfileTab, NavItem, DmConversation, SettingsModal, AuthScreen, NotificationsModal, NovaScreen, UserProfile
 } from './components';
-import { auth } from './lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 import { Camera } from '@capacitor/camera';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { App as CapApp } from '@capacitor/app';
+import { CallModal } from './components';
+import { auth } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -24,6 +26,8 @@ export default function App() {
     return (localStorage.getItem('connect-theme') as 'light'|'dark'|'system') || 'system';
   });
   const [isOnline, setIsOnline] = useState(true);
+  const [viewingUser, setViewingUser] = useState<any | null>(null);
+  const [activeCall, setActiveCall] = useState<any | null>(null);
 
   // Request native permissions on mount
   useEffect(() => {
@@ -125,15 +129,38 @@ export default function App() {
   }, []);
 
   // Handle hardware back button for app-level modals (DMs, Settings, Notifications)
-  React.useEffect(() => {
+  useEffect(() => {
+    const backListener = CapApp.addListener('backButton', () => {
+      if (viewingUser) {
+        setViewingUser(null);
+      } else if (activeDm) {
+        setActiveDm(null);
+      } else if (isSettingsOpen) {
+        setIsSettingsOpen(false);
+      } else if (isNotificationsOpen) {
+        setIsNotificationsOpen(false);
+      } else if (activeTab !== 'home') {
+        setActiveTab('home');
+      } else {
+        CapApp.exitApp();
+      }
+    });
+
+    return () => {
+      backListener.then(l => l.remove());
+    };
+  }, [activeDm, isSettingsOpen, isNotificationsOpen, viewingUser, activeTab]);
+
+  useEffect(() => {
     const handlePopState = () => {
+      if (viewingUser) setViewingUser(null);
       if (activeDm) setActiveDm(null);
       if (isSettingsOpen) setIsSettingsOpen(false);
       if (isNotificationsOpen) setIsNotificationsOpen(false);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [activeDm, isSettingsOpen, isNotificationsOpen]);
+  }, [activeDm, isSettingsOpen, isNotificationsOpen, viewingUser]);
 
   const openDm = (user: any) => {
     setActiveDm(user);
@@ -172,6 +199,37 @@ export default function App() {
       window.history.back();
     } else {
       setIsNotificationsOpen(false);
+    }
+  };
+
+  const openUserProfile = (user: any) => {
+    setViewingUser(user);
+    window.history.pushState({ modal: 'profile_view' }, '');
+  };
+
+  const closeUserProfile = () => {
+    if (window.history.state?.modal === 'profile_view') {
+      window.history.back();
+    } else {
+      setViewingUser(null);
+    }
+  };
+
+  const startDmFromProfile = (user: any) => {
+    setViewingUser(null);
+    openDm(user);
+  };
+
+  const startCall = (user: any, isVideo: boolean = false) => {
+    setActiveCall({ user, isVideo });
+    window.history.pushState({ modal: 'call' }, '');
+  };
+
+  const closeCall = () => {
+    if (window.history.state?.modal === 'call') {
+      window.history.back();
+    } else {
+      setActiveCall(null);
     }
   };
 
@@ -252,23 +310,19 @@ export default function App() {
 
           {/* Dynamic Content */}
           <div className="w-full flex-1 flex flex-col relative" key={activeTab}>
-            {activeTab === 'home' && <HomeTab />}
-            {activeTab === 'chat' && <ChatTab chatMode={chatMode} setChatMode={setChatMode} onSelectDm={openDm} />}
+            {activeTab === 'home' && <HomeTab onViewProfile={openUserProfile} />}
+            {activeTab === 'chat' && <ChatTab chatMode={chatMode} setChatMode={setChatMode} onSelectDm={openDm} onViewProfile={openUserProfile} />}
             {activeTab === 'games' && <GamesTab />}
-            {activeTab === 'search' && <SearchTab onSelectDm={openDm} />}
+            {activeTab === 'search' && <SearchTab onSelectDm={openDm} onViewProfile={openUserProfile} />}
             {activeTab === 'profile' && <ProfileTab onEditProfile={() => openSettings('account')} onOpenSettings={() => openSettings()} />}
             {activeTab === 'video' && (
               <div className="flex-1 flex flex-col items-center justify-center text-center px-6 animate-slide-up">
-                <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                  <Video className="w-12 h-12 text-rose-500" />
+                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                   <Video className="w-10 h-10 text-indigo-600" />
                 </div>
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Video Call</h2>
-                <p className="text-slate-500 dark:text-slate-400 max-w-xs font-medium leading-relaxed">
-                  Connect randomly with anyone around the world. Our video chat is coming soon!
-                </p>
-                <div className="mt-8 px-6 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-sm font-bold tracking-wide uppercase opacity-50 cursor-not-allowed">
-                  Under Development
-                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Connact Video</h3>
+                <p className="text-slate-500 max-w-xs mb-8">Connect with random people across the globe. This feature is coming soon!</p>
+                <div className="px-6 py-2 bg-slate-200 text-slate-600 rounded-full font-bold text-sm">Under Development</div>
               </div>
             )}
           </div>
@@ -316,8 +370,28 @@ export default function App() {
           activeDm.userId === 'nova_ai' ? (
             <NovaScreen onClose={closeDm} />
           ) : (
-            <DmConversation user={activeDm} onClose={closeDm} />
+            <DmConversation 
+              user={activeDm} 
+              onClose={closeDm} 
+              onCall={(u) => startCall(u, false)}
+              onVideoCall={(u) => startCall(u, true)}
+            />
           )
+        )}
+        
+        {activeCall && (
+          <CallModal 
+            otherUser={activeCall.user} 
+            onClose={closeCall} 
+          />
+        )}
+        
+        {viewingUser && (
+          <UserProfile 
+            user={viewingUser} 
+            onClose={closeUserProfile} 
+            onMessage={startDmFromProfile}
+          />
         )}
         
         {isSettingsOpen && (

@@ -14,6 +14,8 @@ interface User {
 interface DmConversationProps {
   user: User;
   onClose: () => void;
+  onCall?: (user: User) => void;
+  onVideoCall?: (user: User) => void;
 }
 
 interface Message {
@@ -67,7 +69,7 @@ function SharedPostPreview({ postId }: { postId: string }) {
   );
 }
 
-export function DmConversation({ user, onClose }: DmConversationProps) {
+export function DmConversation({ user, onClose, onCall, onVideoCall }: DmConversationProps) {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -225,10 +227,16 @@ export function DmConversation({ user, onClose }: DmConversationProps) {
         <div className="flex items-center gap-1 text-slate-600">
           {user.name !== 'Nova (AI)' && (
             <>
-              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
+              <button 
+                onClick={() => onCall && onCall(user)}
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+              >
                 <Phone className="w-5 h-5" />
               </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
+              <button 
+                onClick={() => onVideoCall && onVideoCall(user)}
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+              >
                 <Video className="w-5 h-5" />
               </button>
             </>

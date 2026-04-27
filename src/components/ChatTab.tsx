@@ -9,9 +9,10 @@ interface ChatTabProps {
   chatMode: ChatModeType;
   setChatMode: (mode: ChatModeType) => void;
   onSelectDm: (user: any) => void;
+  onViewProfile: (user: any) => void;
 }
 
-export function ChatTab({ chatMode, setChatMode, onSelectDm }: ChatTabProps) {
+export function ChatTab({ chatMode, setChatMode, onSelectDm, onViewProfile }: ChatTabProps) {
   const [globalInput, setGlobalInput] = useState('');
   const [globalMessages, setGlobalMessages] = useState<any[]>([]);
   const [dmList, setDmList] = useState<any[]>([]);
@@ -204,11 +205,21 @@ export function ChatTab({ chatMode, setChatMode, onSelectDm }: ChatTabProps) {
                 <div className="text-center py-10 text-slate-400 font-medium">Say hi to everyone!</div>
               ) : (
                 globalMessages.map((chat) => (
-                  <div key={chat.id} className="flex gap-4 py-[18px] border-b border-black-[0.03] border-slate-200/60 last:border-0 relative">
-                    <img src={chat.userAvatar} alt={chat.userName} className="w-[44px] h-[44px] object-cover rounded-full shadow-sm shrink-0 mt-0.5" />
+                  <div key={chat.id} className="flex gap-4 py-[18px] border-b border-black-[0.03] border-slate-200/60 last:border-0 relative group">
+                    <img 
+                      src={chat.userAvatar} 
+                      alt={chat.userName} 
+                      className="w-[44px] h-[44px] object-cover rounded-full shadow-sm shrink-0 mt-0.5 cursor-pointer active:scale-95 transition-transform" 
+                      onClick={() => onViewProfile({ id: chat.userId, name: chat.userName, avatar: chat.userAvatar })}
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-0.5">
-                        <span className="font-bold text-[15px] text-slate-900">{chat.userName}</span>
+                        <span 
+                          className="font-bold text-[15px] text-slate-900 cursor-pointer hover:text-emerald-600 transition-colors"
+                          onClick={() => onViewProfile({ id: chat.userId, name: chat.userName, avatar: chat.userAvatar })}
+                        >
+                          {chat.userName}
+                        </span>
                         <span className="text-[12px] font-medium text-slate-500 mt-1">{formatTime(chat.timestamp)}</span>
                       </div>
                       <p className="text-[14.5px] text-slate-600 font-medium leading-snug">{chat.text}</p>
@@ -250,18 +261,25 @@ export function ChatTab({ chatMode, setChatMode, onSelectDm }: ChatTabProps) {
                <div className="text-center py-10 text-slate-400 font-medium">No messages yet.</div>
              ) : dmList.map((chat, i) => (
               <div 
-                key={chat.id || i} 
+                key={chat.id} 
+                className="flex items-center gap-4 p-4 rounded-3xl hover:bg-white/60 dark:hover:bg-slate-800/40 transition-all duration-300 cursor-pointer border border-transparent hover:border-white/40 dark:hover:border-slate-700/30 group"
                 onClick={() => onSelectDm(chat)}
-                className={`flex items-center gap-4 p-3 hover:bg-slate-100/50 rounded-2xl cursor-pointer transition-colors group ${chat.isPinned ? 'bg-indigo-50/40 border border-indigo-100/50' : ''}`}
               >
-                <div className="relative">
-                  <img src={chat.img} alt={chat.name} className="w-[52px] h-[52px] object-cover rounded-[20px] shadow-sm" />
-                  {chat.unread > 0 && <span className="absolute -top-1 -right-1 w-[14px] h-[14px] bg-rose-500 rounded-full border-2 border-white"></span>}
-                  {chat.online && chat.unread === 0 && <span className="absolute -bottom-1 -right-1 w-[12px] h-[12px] bg-emerald-500 rounded-full border-2 border-white"></span>}
+                <div 
+                  className="relative shrink-0 active:scale-90 transition-transform"
+                  onClick={(e) => { e.stopPropagation(); onViewProfile(chat); }}
+                >
+                  <img src={chat.img} alt={chat.name} className="w-[52px] h-[52px] rounded-full object-cover shadow-sm" />
+                  {chat.online && (
+                    <span className="absolute bottom-0 right-0 w-[14px] h-[14px] bg-emerald-500 rounded-full border-[2.5px] border-white shadow-sm"></span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-0.5">
-                    <h3 className={`text-[15px] flex items-center gap-1.5 ${chat.unread > 0 ? 'dark:text-white font-bold text-slate-900' : 'dark:text-slate-100 font-semibold text-slate-800'} truncate`}>
+                    <h3 
+                      className={`text-[15px] flex items-center gap-1.5 ${chat.unread > 0 ? 'dark:text-white font-bold text-slate-900' : 'dark:text-slate-100 font-semibold text-slate-800'} truncate cursor-pointer hover:text-indigo-600 transition-colors`}
+                      onClick={(e) => { e.stopPropagation(); onViewProfile(chat); }}
+                    >
                       {chat.name}
                       {chat.name === 'Nova (AI)' && <Sparkles className="w-3.5 h-3.5 text-indigo-500" />}
                     </h3>

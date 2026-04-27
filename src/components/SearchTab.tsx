@@ -5,9 +5,10 @@ import { collection, query, limit, getDocs, where, addDoc, onSnapshot } from 'fi
 
 interface SearchTabProps {
   onSelectDm?: (user: any) => void;
+  onViewProfile?: (user: any) => void;
 }
 
-export function SearchTab({ onSelectDm }: SearchTabProps) {
+export function SearchTab({ onSelectDm, onViewProfile }: SearchTabProps) {
   const [users, setUsers] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
