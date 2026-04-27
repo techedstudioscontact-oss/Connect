@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import novaAvatar from '/nova-avatar.png';
 import { ChatModeType } from '../types';
 import { Send, Pin, Sparkles } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
@@ -69,7 +70,7 @@ export function ChatTab({ chatMode, setChatMode, onSelectDm }: ChatTabProps) {
         let userInfo = { name: 'Unknown User', img: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&q=80', online: false };
         
         if (otherUserId === 'nova_ai') {
-           userInfo = { name: 'Nova (AI)', img: 'https://images.unsplash.com/photo-1531256379416-9f000e90a4fa?w=150&q=80', online: true };
+           userInfo = { name: 'Nova (AI)', img: novaAvatar, online: true };
         } else {
            const userDocRef = doc(db, 'users', otherUserId);
            const userDocSnap = await getDoc(userDocRef);
@@ -101,7 +102,7 @@ export function ChatTab({ chatMode, setChatMode, onSelectDm }: ChatTabProps) {
           id: 'nova_default',
           userId: 'nova_ai',
           name: 'Nova (AI)',
-          img: 'https://images.unsplash.com/photo-1531256379416-9f000e90a4fa?w=150&q=80',
+          img: novaAvatar,
           online: true,
           msg: 'How can I help you today?',
           time: 'Just now',
