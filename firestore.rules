@@ -89,5 +89,13 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid == request.resource.data.from;
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.to;
     }
+
+    // 7. Video Calling System
+    match /calls/{userId} {
+      // The target user can read and clear their own call signals
+      allow read, delete: if isSignedIn() && isOwner(userId);
+      // Anyone can send a call signal to someone else
+      allow create, update: if isSignedIn();
+    }
   }
 }
