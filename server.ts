@@ -1,14 +1,22 @@
+/* 
+  Copyright (c) 2026 Rascales dev under teched studios. 
+  All rights reserved.
+*/
+
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { v2 as cloudinary } from 'cloudinary';
 import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 cloudinary.config({
-  cloud_name: 'drmjpr6ng',
-  api_key: '574898865636141',
-  api_secret: 'ixD4dwGI0TYbY7ah2DPmS_9QOWU'
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'drmjpr6ng',
+  api_key: process.env.CLOUDINARY_API_KEY || '574898865636141',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'ixD4dwGI0TYbY7ah2DPmS_9QOWU'
 });
 
 const storage = multer.memoryStorage();

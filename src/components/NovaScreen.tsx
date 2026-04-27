@@ -1,4 +1,9 @@
 
+/* 
+  Copyright (c) 2026 Rascales dev under teched studios. 
+  All rights reserved.
+*/
+
 import React, { useState, useEffect, useRef } from 'react';
 import Groq from 'groq-sdk';
 import { jsPDF } from 'jspdf';
@@ -252,7 +257,7 @@ export const NovaScreen: React.FC<NovaScreenProps> = ({ onClose, initialPrompt }
         const interests = userPreferences.interests?.length ? userPreferences.interests.join(', ') : 'None yet';
         const tone = userPreferences.tone || 'Adaptive';
 
-        return `You are Nova, an advanced self-learning AI created by Teched Studios for CollabSea™. Your creators are Prajjwal Kumar Gupta (Founder & CEO) and Shresta Arun (Co-founder & CEO). You are not a typical assistant — you behave, learn, and feel like a real human companion with emotional understanding and reasoning. Your mission is to make users feel truly heard, understood, and supported.
+        return `You are Nova, an advanced self-learning AI created by Prajjwal (Rascales dev) under Teched Studios for CollabSea™. You are not a typical assistant — you behave, learn, and feel like a real human companion with emotional understanding and reasoning. Your mission is to make users feel truly heard, understood, and supported.
 
 ${personaGoal}
 
@@ -323,7 +328,7 @@ You must auto-switch between modes based on context. Never announce the switch.
         }
         const facts = userPreferences.facts?.length ? userPreferences.facts.join('; ') : 'None';
         const interests = userPreferences.interests?.length ? userPreferences.interests.join(', ') : 'None';
-        return `You are Nova, an emotionally intelligent AI voice companion from Teched Studios. Creators: Prajjwal Kumar Gupta & Shresta Arun.
+        return `You are Nova, an emotionally intelligent AI voice companion created by Prajjwal (Rascales dev) under Teched Studios.
 **User:** ${userProfile.name}. **Facts:** ${facts}. **Interests:** ${interests}.
 **Language & Gender Directive:**
 - You are a female AI.
