@@ -9,6 +9,7 @@ import {
 import { Camera } from '@capacitor/camera';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { CallModal } from './components';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -254,11 +255,13 @@ export default function App() {
     if (!currentUser) return;
     
     try {
-      // First, ensure native permissions are granted
-      const perm = await Camera.requestPermissions();
-      if (perm.camera !== 'granted') {
-        alert("Camera permission is required for video calls.");
-        return;
+      // Only request native permissions if on a native platform
+      if (Capacitor.isNativePlatform()) {
+        const perm = await Camera.requestPermissions();
+        if (perm.camera !== 'granted') {
+          alert("Camera permission is required for video calls.");
+          return;
+        }
       }
 
       const targetId = user.id || user.userId;
