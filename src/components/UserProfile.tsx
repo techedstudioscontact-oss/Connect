@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, MessageSquare, Shield, Share2, MoreHorizontal, Heart, MessageCircle } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, limit, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, getDocs } from 'firebase/firestore';
 import { formatTime } from '../lib/utils';
 
 interface UserProfileProps {
@@ -21,6 +21,10 @@ export function UserProfile({ user, onClose, onMessage }: UserProfileProps) {
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     // Fetch full user details from Firestore
@@ -35,22 +39,49 @@ export function UserProfile({ user, onClose, onMessage }: UserProfileProps) {
       }
     };
 
-    // Fetch user's posts
-    const q = query(
-      collection(db, 'posts'),
-      where('authorId', '==', user.id),
-      orderBy('timestamp', 'desc'),
-      limit(20)
-    );
+    // Fetch followers/following real data
+    const followersRef = collection(db, `users/${user.id}/followers`);
+    const followingRef = collection(db, `users/${user.id}/following`);
+    
+    const unsubFollowers = onSnapshot(followersRef, (snap) => setFollowerCount(snap.size));
+    const unsubFollowing = onSnapshot(followingRef, (snap) => setFollowingCount(snap.size));
 
-    const unsubPosts = onSnapshot(q, (snapshot) => {
-      setUserPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    });
+    // Check if current user is following this profile
+    if (auth.currentUser) {
+      const followCheckRef = doc(db, `users/${user.id}/followers`, auth.currentUser.uid);
+      onSnapshot(followCheckRef, (doc) => setIsFollowing(doc.exists()));
+    }
 
     fetchUserDetails();
-    return () => unsubPosts();
+    return () => {
+      unsubPosts();
+      unsubFollowers();
+      unsubFollowing();
+    };
   }, [user.id]);
+
+  const handleFollow = async () => {
+    if (!auth.currentUser || isFollowLoading) return;
+    setIsFollowLoading(true);
+    const myId = auth.currentUser.uid;
+    const targetId = user.id;
+
+    try {
+      if (isFollowing) {
+        // Unfollow
+        await deleteDoc(doc(db, `users/${targetId}/followers`, myId));
+        await deleteDoc(doc(db, `users/${myId}/following`, targetId));
+      } else {
+        // Follow
+        await setDoc(doc(db, `users/${targetId}/followers`, myId), { timestamp: Date.now() });
+        await setDoc(doc(db, `users/${myId}/following`, targetId), { timestamp: Date.now() });
+      }
+    } catch (e) {
+      console.error("Error toggling follow:", e);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   return (
     <div className="absolute inset-0 z-[300] bg-slate-50 dark:bg-[#0c1222] flex flex-col animate-slide-up overflow-y-auto no-scrollbar">
@@ -87,6 +118,19 @@ export function UserProfile({ user, onClose, onMessage }: UserProfileProps) {
 
         {/* Action Buttons */}
         <div className="flex justify-end pt-4 gap-3">
+          {auth.currentUser?.uid !== user.id && (
+            <button 
+              onClick={handleFollow}
+              disabled={isFollowLoading}
+              className={`px-8 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 flex items-center gap-2 ${
+                isFollowing 
+                ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' 
+                : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90'
+              }`}
+            >
+              {isFollowLoading ? '...' : (isFollowing ? 'Following' : 'Follow')}
+            </button>
+          )}
           <button 
             onClick={() => onMessage(user)}
             className="px-6 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all active:scale-95 flex items-center gap-2"
@@ -117,11 +161,11 @@ export function UserProfile({ user, onClose, onMessage }: UserProfileProps) {
             <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Posts</span>
           </div>
           <div>
-            <span className="block text-xl font-black text-slate-900 dark:text-white">12.5k</span>
+            <span className="block text-xl font-black text-slate-900 dark:text-white">{followerCount}</span>
             <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Followers</span>
           </div>
           <div>
-            <span className="block text-xl font-black text-slate-900 dark:text-white">482</span>
+            <span className="block text-xl font-black text-slate-900 dark:text-white">{followingCount}</span>
             <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">Following</span>
           </div>
         </div>
